@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
+      - name: Get short commit hash
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set version to commit hash
+        run: npm pkg set version="0.0.0-${{ steps.vars.outputs.short_sha }}"
+
+      - name: Build application
+        run: npm run build -- --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ steps.vars.outputs.short_sha }}
+          path: |
+            dist/*.pacman
+            dist/*.deb
+            dist/linux-unpacked/
+          retention-days: 90

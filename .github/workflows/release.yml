@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'release-v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/release-}
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+          echo "version_number=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set version
+        run: npm pkg set version="${{ steps.version.outputs.version_number }}"
+
+      - name: Build application
+        run: npm run build -- --publish never
+
+      - name: Prepare release assets
+        run: |
+          cd dist
+          # Zip linux-unpacked folder
+          zip -r linux-unpacked-${{ steps.version.outputs.version }}.zip linux-unpacked/
+
+          # Find and rename files with full version
+          PACMAN_FILE=$(ls *.pacman 2>/dev/null | head -n 1)
+          DEB_FILE=$(ls *.deb 2>/dev/null | head -n 1)
+
+          if [ ! -z "$PACMAN_FILE" ]; then
+            cp "$PACMAN_FILE" linux-linear-${{ steps.version.outputs.version }}.pacman
+          fi
+
+          if [ ! -z "$DEB_FILE" ]; then
+            cp "$DEB_FILE" linux-linear-${{ steps.version.outputs.version }}.deb
+          fi
+
+          cd ..
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/linux-linear-${{ steps.version.outputs.version }}.pacman
+            dist/linux-linear-${{ steps.version.outputs.version }}.deb
+            dist/linux-unpacked-${{ steps.version.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

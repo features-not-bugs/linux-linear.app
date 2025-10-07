@@ -1,0 +1,53 @@
+{
+  "name": "linear",
+  "version": "1.0.0",
+  "description": "A fast and focused experience to plan and build your product.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx electron index.js",
+    "build": "electron-builder"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/features-not-bugs/linux-linear.app.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "features-not-bugs",
+    "email": "6836908+features-not-bugs@users.noreply.github.com",
+    "website": "https://github.com/features-not-bugs/linux-linear.app"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/features-not-bugs/linux-linear.app/issues"
+  },
+  "homepage": "https://github.com/features-not-bugs/linux-linear.app#readme",
+  "dependencies": {
+    "electron-config": "^2.0.0"
+  },
+  "devDependencies": {
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "files": [
+      "**/*",
+      "build/icon.png"
+    ],
+    "asarUnpack": [
+      "build/icon.png"
+    ],
+    "appId": "com.linear.app",
+    "productName": "Linear",
+    "executableName": "linear",
+    "linux": {
+      "target": [
+        "pacman",
+        "deb"
+      ],
+      "synopsis": "Linear is a purpose-built tool for modern product development. Streamline issues, projects, and product roadmaps.",
+      "description": "Plan and build products.",
+      "category": "Development"
+    }
+  }
+}
